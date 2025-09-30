@@ -23,12 +23,9 @@
 # ECLI: ECLI:EU:C:2023:1035
 # https://curia.europa.eu/juris/document/document.jsf?text=&docid=280765&pageIndex=0&doclang=en&mode=lst&dir=&occ=first&part=1&cid=24072543
 
-
-
-
-
 import requests
 import os
+import csv
 
 # Gets judgments from EUR-Lex by CELEX number
 # Input: CELEX number (e.g. 62018CJ0123)
@@ -46,9 +43,57 @@ def get_judgment_by_celex(celex):
     if r.status_code == 200 and "html" in r.headers.get("Content-Type", ""):
         with open(output, "w", encoding="utf-8") as f:
             f.write(r.text)
-        print(f"Saved to {output}")
+        # print(f"Saved to {output}")
+        log_download_status(celex, True)
     else:
-        raise RuntimeError(f"Fehler beim Herunterladen: HTTP {r.status_code}")
+        log_download_status(celex, False)
+        # raise RuntimeError(f"Fehler beim Herunterladen: HTTP {r.status_code}")
+
+# Documents whether a judgement is successfully retrieved
+# Input: CELEX number, success status (True/False)
+# Output: Appends a log entry to download_log.csv
+def log_download_status(celex, status):
+    from datetime import datetime
+
+    log_file = "../data/download_log.csv"
     
+    # Erstellen Sie das Verzeichnis, falls es nicht existiert
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
+    
+    # Überprüfen, ob die Datei existiert, um die Header zu schreiben
+    file_exists = os.path.isfile(log_file)
+    
+    with open(log_file, mode='a', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(["CELEX", "Status", "Timestamp"])  # Header schreiben
+        writer.writerow([celex, status, datetime.now().isoformat()])  # Daten schreiben
+
+# Resets the data folder and CSV log file
+# Input: Folder path, CSV file path
+# Output: Empties the folder and resets the CSV file with header
+def reset_folder_and_csv(folder_path, csv_file_path):
+    # Leeren des Ordners
+    if os.path.exists(folder_path):
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.remove(file_path)  # Datei löschen
+                elif os.path.isdir(file_path):
+                    os.rmdir(file_path)  # Verzeichnis löschen (nur leer)
+            except Exception as e:
+                print(f"Fehler beim Löschen von {file_path}: {e}")
+    
+    # Zurücksetzen der CSV-Datei
+    header = ["CELEX", "Status", "Timestamp"]  # Header definieren
+    with open(csv_file_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)  # Header schreiben
+
+
 if __name__ == "__main__":
-    get_judgment_by_celex("62021CJ0333")
+    reset_folder_and_csv("../data/judgements/", "../data/download_log.csv")
+    get_judgment_by_celex("62021CJ0333") # Example CELEX for testing
+    get_judgment_by_celex("asdf")  # Invalid CELEX to test error handling
+    get_judgment_by_celex("62021CJ0333") # Duplicate to test logging
