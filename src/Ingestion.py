@@ -86,7 +86,7 @@ def reset_folder_and_csv(folder_path, csv_file_path):
                 print(f"Fehler beim Löschen von {file_path}: {e}")
     
     # Zurücksetzen der CSV-Datei
-    header = ["CELEX", "Status", "Timestamp"]  # Header definieren
+    header = ["CELEX", "downloaded", "timestamp"]  # Header definieren
     with open(csv_file_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(header)  # Header schreiben

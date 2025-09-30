@@ -1,0 +1,1 @@
+# Hier werden die Erkenntnisse aus den csv-Dateien zusammengeführt und aufbereitet
